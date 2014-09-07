@@ -39,7 +39,7 @@ function _assert(cond, msg){
 	// TODO: see qunit.js extractStacktrace()
 	if(!cond){
 		msg = msg ? ": " + msg : "";
-		$.error("Assertion failed" + msg);
+		$.error("Fancytree assertion failed" + msg);
 	}
 }
 
@@ -1408,7 +1408,7 @@ FancytreeNode.prototype = /** @lends FancytreeNode# */{
 
 		if( isParentWindow ) {
 			nodeY = $(this.span).offset().top;
-			topNodeY = topNode ? $(topNode.span).offset().top : 0;
+			topNodeY = (topNode && topNode.span) ? $(topNode.span).offset().top : 0;
 			$animateTarget = $("html,body");
 
 		} else {
@@ -1433,7 +1433,7 @@ FancytreeNode.prototype = /** @lends FancytreeNode# */{
 			// If a topNode was passed, make sure that it is never scrolled
 			// outside the upper border
 			if(topNode){
-				_assert($(topNode.span).is(":visible"));
+				_assert(topNode.isRoot() || $(topNode.span).is(":visible"), "topNode must be visible");
 				if( topNodeY < newScrollTop ){
 					newScrollTop = topNodeY - topOfs;
 					// this.debug("    scrollIntoView(), TOP newScrollTop=", newScrollTop);
@@ -2829,14 +2829,14 @@ $.extend(Fancytree.prototype,
 	 */
 	nodeRenderTitle: function(ctx, title) {
 		// set node connector images, links and text
-		var id, imageSrc, nodeTitle, role, tabindex, tooltip,
+		var id, iconSpanClass, nodeTitle, role, tabindex, tooltip,
 			node = ctx.node,
 			tree = ctx.tree,
 			opts = ctx.options,
 			aria = opts.aria,
 			level = node.getLevel(),
 			ares = [],
-			icon = node.data.icon;
+			iconSrc = node.data.icon;
 
 		if(title !== undefined){
 			node.title = title;
@@ -2850,10 +2850,13 @@ $.extend(Fancytree.prototype,
 		// TODO: optiimize this if clause
 		if( level < opts.minExpandLevel ) {
 			if(level > 1){
+				if( !node.lazy ) {
+					node.expanded = true;
+				}
 				if(aria){
-					ares.push("<span role='button' class='fancytree-expander'></span>");
+					ares.push("<span role='button' class='fancytree-expander fancytree-expander-fixed'></span>");
 				}else{
-					ares.push("<span class='fancytree-expander'></span>");
+					ares.push("<span class='fancytree-expander fancytree-expander-fixed''></span>");
 				}
 			}
 			// .. else (i.e. for root level) skip expander/connector alltogether
@@ -2874,17 +2877,23 @@ $.extend(Fancytree.prototype,
 		}
 		// folder or doctype icon
 		role = aria ? " role='img'" : "";
-		if ( icon && typeof icon === "string" ) {
-			imageSrc = (icon.charAt(0) === "/") ? icon : ((opts.imagePath || "") + icon);
-			ares.push("<img src='" + imageSrc + "' class='fancytree-icon' alt='' />");
-		} else if ( node.data.iconclass ) {
-			// TODO: review and test and document
-			ares.push("<span " + role + " class='fancytree-custom-icon" + " " + node.data.iconclass +  "'></span>");
-		} else if ( icon === true || (icon !== false && opts.icons !== false) ) {
-			// opts.icons defines the default behavior.
-			// node.icon == true/false can override this
-			ares.push("<span " + role + " class='fancytree-icon'></span>");
+		if( iconSrc === true || (iconSrc !== false && opts.icons !== false) ) {
+			// opts.icons defines the default behavior, node.icon == true/false can override this
+			if ( iconSrc && typeof iconSrc === "string" ) {
+				// node.icon is an image url
+				iconSrc = (iconSrc.charAt(0) === "/") ? iconSrc : ((opts.imagePath || "") + iconSrc);
+				ares.push("<img src='" + iconSrc + "' class='fancytree-icon' alt='' />");
+			} else {
+				// See if node.iconClass or opts.iconClass() define a class name
+				iconSpanClass = (opts.iconClass && opts.iconClass.call(tree, node, ctx)) || node.data.iconclass || null;
+				if( iconSpanClass ) {
+					ares.push("<span " + role + " class='fancytree-custom-icon " + iconSpanClass +  "'></span>");
+				} else {
+					ares.push("<span " + role + " class='fancytree-icon'></span>");
+				}
+			}
 		}
+
 		// node title
 		nodeTitle = "";
 		// TODO: currently undocumented; may be removed?
