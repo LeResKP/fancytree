@@ -1,5 +1,4 @@
 /*!
- *
  * jquery.fancytree.wide.js
  * Support for 100% wide selection bars.
  * (Extension module for jquery.fancytree.js: https://github.com/mar10/fancytree/)
@@ -22,6 +21,44 @@ var reNumUnit = /^([+-]?(?:\d+|\d*\.\d+))([a-z]*|%)$/; // split "1.5em" to ["1.5
 /*******************************************************************************
  * Private functions and variables
  */
+
+// var _assert = $.ui.fancytree.assert;
+
+/* Calculate inner width without scrollbar */
+function realInnerWidth($el) {
+	// http://blog.jquery.com/2012/08/16/jquery-1-8-box-sizing-width-csswidth-and-outerwidth/
+//	inst.contWidth = parseFloat(this.$container.css("width"), 10);
+	// 'Client width without scrollbar' - 'padding'
+	return $el[0].clientWidth - ($el.innerWidth() -  parseFloat($el.css("width"), 10));
+}
+
+
+/**
+ * [ext-wide] Recalculate the width of the selection bar after the tree container
+ * was resized.<br>
+ * May be called explicitly on container resize, since there is no resize event
+ * for DIV tags.
+ *
+ * @alias Fancytree#wideUpdate
+ * @requires jquery.fancytree.wide.js
+ */
+$.ui.fancytree._FancytreeClass.prototype.wideUpdate = function(){
+	var inst = this.ext.wide,
+		prevCw = inst.contWidth,
+		prevLo = inst.lineOfs;
+	// http://blog.jquery.com/2012/08/16/jquery-1-8-box-sizing-width-csswidth-and-outerwidth/
+//	inst.contWidth = parseFloat(this.$container.css("width"), 10);
+	inst.contWidth = realInnerWidth(this.$container);
+	// Each title is precceeded by 2 or 3 icons (16px + 3 margin)
+	//     + 1px title border and 3px title padding
+	inst.lineOfs = (this.options.checkbox ? 3 : 2) * 19;
+	if( prevCw !== inst.contWidth || prevLo !== inst.lineOfs ) {
+		this.debug("wideUpdate: " + inst.contWidth);
+		this.visit(function(node){
+			node.tree._callHook("nodeRenderTitle", node);
+		});
+	}
+};
 
 /*******************************************************************************
  * Extension code
