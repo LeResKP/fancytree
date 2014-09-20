@@ -13,6 +13,8 @@
   * [Improved] #313 Allow HTML in tooltips
   * [Fixed] crash in scrollIntoView() when parent is `window`
   * [Fixed] #305 Checkbox doesn't show with Glyph + Table
+  * [Fixed] #316 Fix hasChildren() when children = []
+  * [Fixed] #237 ajax LoadError not updated in StatusNode with Table ext
   * [Deprecated] node.isRoot(). Use node.isRootNode() instead
 
 # 2.3.0 / 2014-08-17

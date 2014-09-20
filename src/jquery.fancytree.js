@@ -844,7 +844,7 @@ FancytreeNode.prototype = /** @lends FancytreeNode# */{
 			}
 			return true;
 		}
-		return !!this.children;
+		return ( this.children && this.children.length );
 	},
 	/** Return true if node has keyboard focus.
 	 * @returns {boolean}
@@ -3417,7 +3417,12 @@ $.extend(Fancytree.prototype,
 			var firstChild = ( node.children ? node.children[0] : null );
 			if ( firstChild && firstChild.isStatusNode() ) {
 				$.extend(firstChild, data);
+				firstChild.statusNodeType = type;
 				tree._callHook("nodeRender", firstChild);
+				tree._callHook("nodeRenderTitle", firstChild);
+				// tree._callHook("nodeRenderStatus", firstChild);
+				// node.render();
+				// firstChild.renderTitle();
 			} else {
 				data.key = "_statusNode";
 				node._setChildren([data]);
@@ -3867,7 +3872,7 @@ $.widget("ui.fancytree",
 	 * @returns {FancytreeNode}
 	 */
 	getNodeByKey: function(key) {
-		return this.tree.getNodeByKey(key);
+		return this.tree.getNodeByKey("" + key);
 	},
 	/** Return the invisible system root node.
 	 * @returns {FancytreeNode}
